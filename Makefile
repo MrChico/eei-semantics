@@ -79,7 +79,8 @@ k_files:=eei-driver.k eei.k
 java_defn:=$(patsubst %,$(java_dir)/%,$(k_files))
 ocaml_defn:=$(patsubst %,$(ocaml_dir)/%,$(k_files))
 haskell_defn:=$(patsubst %,$(haskell_dir)/%,$(k_files))
-
+syntax_module:=eei-driver.k
+main_module:=EEI-DRIVER
 
 defn: defn-ocaml defn-java defn-haskell
 defn-ocaml: $(ocaml_defn)
@@ -91,10 +92,21 @@ defn-haskell: $(haskell_defn)
 
 build: build-java
 build-java: $(BUILD_DIR)/java/driver-kompiled/timestamp
+build-ocaml: $(BUILD_DIR)/ocaml/driver-kompiled/timestamp
 
 # Java Backend
 
 $(BUILD_DIR)/java/driver-kompiled/timestamp: $(java_defn)
 	@echo "== kompile: $@"
-	$(K_BIN)/kompile --debug --main-module EEI-DRIVER --backend java \
-					--syntax-module EEI-DRIVER $< --directory $(BUILD_DIR)/java -I $(BUILD_DIR)/java
+	$(K_BIN)/kompile --debug --main-module $(main_module) --backend java \
+					--syntax-module $(main_module) $< --directory $(BUILD_DIR)/java -I $(BUILD_DIR)/java
+
+# Ocaml Backend
+
+$(BUILD_DIR)/ocaml/driver-kompiled/timestamp: $(ocaml_defn)
+	@echo "== kompile: $@"
+	eval $$(opam config env)                              \
+	    $(K_BIN)/kompile -O3 --non-strict --backend ocaml \
+	    --directory $(ocaml_dir) -I $(ocaml_dir)          \
+	    --main-module   $(main_module)                    \
+      --syntax-module $(syntax_module) $<
